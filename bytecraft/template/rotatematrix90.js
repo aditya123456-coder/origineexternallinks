@@ -34,18 +34,25 @@ const LANGUAGE_CONFIG = {
 
 export async function rotatematrix90(userCode, testCase, currentlang) {
     const lang = LANGUAGE_CONFIG[currentlang];
-    let fullcode = "";
 
-    const matrix = testCase.matrix
+    // 🔹 Convert Firestore object → 2D array
+    const matrixArr = [];
+    for (let i = 0; i < testCase.n; i++) {
+        matrixArr.push(testCase.matrix[`r${i}`]);
+    }
+
+    const matrixCStyle = matrixArr
         .map(r => `{${r.join(",")}}`)
         .join(",");
+
+    let fullcode = "";
 
     if (currentlang === "c") {
         fullcode = `#include<stdio.h>
 ${userCode}
 int main(){
     int n=${testCase.n};
-    int mat[100][100]={${matrix}};
+    int mat[100][100]={${matrixCStyle}};
     rotate90(mat,n);
     for(int i=0;i<n;i++)
         for(int j=0;j<n;j++)
@@ -59,7 +66,7 @@ using namespace std;
 ${userCode}
 int main(){
     int n=${testCase.n};
-    int mat[100][100]={${matrix}};
+    int mat[100][100]={${matrixCStyle}};
     rotate90(mat,n);
     for(int i=0;i<n;i++)
         for(int j=0;j<n;j++)
@@ -72,7 +79,7 @@ int main(){
 ${userCode}
 public static void main(String[] args){
     int n=${testCase.n};
-    int[][] mat=${JSON.stringify(testCase.matrix)};
+    int[][] mat=${JSON.stringify(matrixArr)};
     rotate90(mat,n);
     for(int i=0;i<n;i++)
         for(int j=0;j<n;j++)
@@ -82,7 +89,7 @@ public static void main(String[] args){
 
     if (currentlang === "javascript") {
         fullcode = `${userCode}
-let mat=${JSON.stringify(testCase.matrix)};
+let mat=${JSON.stringify(matrixArr)};
 rotate90(mat,${testCase.n});
 let out="";
 for(let i=0;i<${testCase.n};i++)
