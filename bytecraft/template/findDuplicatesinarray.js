@@ -32,7 +32,7 @@ const LANGUAGE_CONFIG = {
     bash: { language: "bash", version: "5.2.0" }
 };
 
-export async function findDuplicatesinarrayinarray(userCode, testCase, currentlang) {
+export async function findDuplicatesinarray(userCode, testCase, currentlang) {
     let lang = LANGUAGE_CONFIG[currentlang];
     let fullcode = null;
     
@@ -149,4 +149,5 @@ if (!result || result.length === 0) {
         passed: response.run.output.trim() === testCase.expected,
         output: response.run.output
     };
+
 }
