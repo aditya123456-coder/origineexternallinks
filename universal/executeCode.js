@@ -1,18 +1,32 @@
 export async function executeCode(code, language) {
     const PISTON_API = "https://emkc.org/api/v2/piston";
 
+    const LANGUAGE_MAP = {
+        c: "c",
+        cpp: "c++",
+        python: "python",
+        java: "java",
+        javascript: "javascript",
+        php: "php",
+        go: "go",
+        ruby: "ruby",
+        kotlin: "kotlin",
+        csharp: "csharp",
+        swift: "swift"
+    };
+
+    const pistonLang = LANGUAGE_MAP[language] || language;
+
     try {
-        // 1️⃣ Fetch all runtimes
         const runtimesRes = await fetch(`${PISTON_API}/runtimes`);
         if (!runtimesRes.ok) throw new Error("Failed to fetch runtimes");
 
         const runtimes = await runtimesRes.json();
 
-        // 2️⃣ Find latest version for the language
-        const matches = runtimes.filter(r => r.language === language);
+        const matches = runtimes.filter(r => r.language === pistonLang);
 
         if (!matches.length) {
-            throw new Error(`Language not supported: ${language}`);
+            throw new Error(`Language not supported: ${pistonLang}`);
         }
 
         const latest = matches.sort((a, b) =>
@@ -21,12 +35,11 @@ export async function executeCode(code, language) {
 
         const version = latest.version;
 
-        // 3️⃣ Execute code
         const execRes = await fetch(`${PISTON_API}/execute`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                language,
+                language: pistonLang,
                 version,
                 files: [{ content: code }]
             })
@@ -44,7 +57,7 @@ export async function executeCode(code, language) {
             output: (result.run?.stdout || "") + (result.run?.stderr || ""),
             code: result.run?.code,
             signal: result.run?.signal,
-            language,
+            language: pistonLang,
             version
         };
 
@@ -55,7 +68,7 @@ export async function executeCode(code, language) {
             output: err.message,
             code: -1,
             signal: null,
-            language,
+            language: pistonLang,
             version: null
         };
     }
