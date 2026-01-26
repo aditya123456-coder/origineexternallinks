@@ -34,11 +34,8 @@ export async function executeCode(code, language) {
 
         const version = latest.version;
 
-        // 🔥 FIX: unescape newlines and tabs
-        const normalizedCode = code
-            .replace(/\\n/g, "\n")
-            .replace(/\\t/g, "\t")
-            .replace(/\\r/g, "\r");
+        // ✅ SAFE: do NOT touch \n inside code
+        const normalizedCode = code.replace(/\r\n/g, "\n");
 
         const execRes = await fetch(`${PISTON_API}/execute`, {
             method: "POST",
