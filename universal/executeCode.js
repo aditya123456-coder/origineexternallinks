@@ -22,7 +22,6 @@ export async function executeCode(code, language) {
         if (!runtimesRes.ok) throw new Error("Failed to fetch runtimes");
 
         const runtimes = await runtimesRes.json();
-
         const matches = runtimes.filter(r => r.language === pistonLang);
 
         if (!matches.length) {
@@ -35,13 +34,19 @@ export async function executeCode(code, language) {
 
         const version = latest.version;
 
+        // 🔥 FIX: unescape newlines and tabs
+        const normalizedCode = code
+            .replace(/\\n/g, "\n")
+            .replace(/\\t/g, "\t")
+            .replace(/\\r/g, "\r");
+
         const execRes = await fetch(`${PISTON_API}/execute`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 language: pistonLang,
                 version,
-                files: [{ content: code }]
+                files: [{ content: normalizedCode }]
             })
         });
 
