@@ -1,3 +1,5 @@
+
+
 export async function executeCode(code, language) {
     const PISTON_API = "https://emkc.org/api/v2/piston";
 
@@ -22,6 +24,7 @@ export async function executeCode(code, language) {
         if (!runtimesRes.ok) throw new Error("Failed to fetch runtimes");
 
         const runtimes = await runtimesRes.json();
+
         const matches = runtimes.filter(r => r.language === pistonLang);
 
         if (!matches.length) {
@@ -34,16 +37,13 @@ export async function executeCode(code, language) {
 
         const version = latest.version;
 
-        // ✅ SAFE: do NOT touch \n inside code
-        const normalizedCode = code.replace(/\r\n/g, "\n");
-
         const execRes = await fetch(`${PISTON_API}/execute`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 language: pistonLang,
                 version,
-                files: [{ content: normalizedCode }]
+                files: [{ content: code }]
             })
         });
 
@@ -75,3 +75,5 @@ export async function executeCode(code, language) {
         };
     }
 }
+
+
