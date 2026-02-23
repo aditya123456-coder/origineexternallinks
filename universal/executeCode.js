@@ -1,66 +1,68 @@
-
-
 export async function executeCode(code, language) {
-    const PISTON_API = "https://emkc.org/api/v2/piston";
+
+    const JUDGE0_API = "https://judge0-ce.p.rapidapi.com"; 
+    // If NOT using RapidAPI, replace with:
+    // const JUDGE0_API = "https://ce.judge0.com";
 
     const LANGUAGE_MAP = {
-        c: "c",
-        cpp: "c++",
-        python: "python",
-        java: "java",
-        javascript: "javascript",
-        php: "php",
-        go: "go",
-        ruby: "ruby",
-        kotlin: "kotlin",
-        csharp: "csharp",
-        swift: "swift"
+        c: 50,
+        cpp: 54,
+        python: 71,
+        java: 62,
+        javascript: 63,
+        php: 68,
+        go: 60,
+        ruby: 72,
+        kotlin: 78,
+        csharp: 51,
+        swift: 83
     };
 
-    const pistonLang = LANGUAGE_MAP[language] || language;
+    const language_id = LANGUAGE_MAP[language];
+
+    if (!language_id) {
+        return {
+            stdout: "",
+            stderr: "Language not supported",
+            output: "Language not supported",
+            code: -1,
+            signal: null,
+            language,
+            version: null
+        };
+    }
 
     try {
-        const runtimesRes = await fetch(`${PISTON_API}/runtimes`);
-        if (!runtimesRes.ok) throw new Error("Failed to fetch runtimes");
 
-        const runtimes = await runtimesRes.json();
-
-        const matches = runtimes.filter(r => r.language === pistonLang);
-
-        if (!matches.length) {
-            throw new Error(`Language not supported: ${pistonLang}`);
-        }
-
-        const latest = matches.sort((a, b) =>
-            a.version.localeCompare(b.version, undefined, { numeric: true })
-        ).at(-1);
-
-        const version = latest.version;
-
-        const execRes = await fetch(`${PISTON_API}/execute`, {
+        // STEP 1: Create submission
+        const createRes = await fetch(`${JUDGE0_API}/submissions?base64_encoded=false&wait=true`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                // Required ONLY if using RapidAPI:
+                // "X-RapidAPI-Key": "YOUR_API_KEY",
+                // "X-RapidAPI-Host": "judge0-ce.p.rapidapi.com"
+            },
             body: JSON.stringify({
-                language: pistonLang,
-                version,
-                files: [{ content: code }]
+                source_code: code,
+                language_id: language_id
             })
         });
 
-        if (!execRes.ok) {
+        if (!createRes.ok) {
             throw new Error("Execution request failed");
         }
 
-        const result = await execRes.json();
+        const result = await createRes.json();
 
         return {
-            stdout: result.run?.stdout || "",
-            stderr: result.run?.stderr || "",
-            output: (result.run?.stdout || "") + (result.run?.stderr || ""),
-            code: result.run?.code,
-            signal: result.run?.signal,
-            language: pistonLang,
-            version
+            stdout: result.stdout || "",
+            stderr: result.stderr || result.compile_output || "",
+            output: (result.stdout || "") + (result.stderr || "") + (result.compile_output || ""),
+            code: result.status?.id || 0,
+            signal: null,
+            language,
+            version: null
         };
 
     } catch (err) {
@@ -70,10 +72,8 @@ export async function executeCode(code, language) {
             output: err.message,
             code: -1,
             signal: null,
-            language: pistonLang,
+            language,
             version: null
         };
     }
 }
-
-
