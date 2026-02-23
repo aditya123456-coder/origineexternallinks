@@ -1,8 +1,7 @@
 export async function executeCode(code, language) {
 
-    const JUDGE0_API = "https://judge0-ce.p.rapidapi.com"; 
-    // If NOT using RapidAPI, replace with:
-    // const JUDGE0_API = "https://ce.judge0.com";
+    // ✅ Official Free Judge0 Endpoint (NO API KEY REQUIRED)
+    const JUDGE0_API = "https://ce.judge0.com";
 
     const LANGUAGE_MAP = {
         c: 50,
@@ -34,33 +33,39 @@ export async function executeCode(code, language) {
 
     try {
 
-        // STEP 1: Create submission
-        const createRes = await fetch(`${JUDGE0_API}/submissions?base64_encoded=false&wait=true`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                // Required ONLY if using RapidAPI:
-                // "X-RapidAPI-Key": "YOUR_API_KEY",
-                // "X-RapidAPI-Host": "judge0-ce.p.rapidapi.com"
-            },
-            body: JSON.stringify({
-                source_code: code,
-                language_id: language_id
-            })
-        });
+        const response = await fetch(
+            `${JUDGE0_API}/submissions?base64_encoded=false&wait=true`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    source_code: code,
+                    language_id: language_id,
+                    stdin: "",              // optional input
+                    cpu_time_limit: 5,      // safety limit
+                    memory_limit: 128000    // 128MB
+                })
+            }
+        );
 
-        if (!createRes.ok) {
-            throw new Error("Execution request failed");
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Execution failed: ${errorText}`);
         }
 
-        const result = await createRes.json();
+        const result = await response.json();
 
         return {
             stdout: result.stdout || "",
             stderr: result.stderr || result.compile_output || "",
-            output: (result.stdout || "") + (result.stderr || "") + (result.compile_output || ""),
+            output:
+                (result.stdout || "") +
+                (result.stderr || "") +
+                (result.compile_output || ""),
             code: result.status?.id || 0,
-            signal: null,
+            signal: result.status?.description || null,
             language,
             version: null
         };
