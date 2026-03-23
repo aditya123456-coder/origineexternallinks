@@ -5,7 +5,7 @@ export function runAndValidate({ dropzone, output, validationResult, levelConfig
 
   const wsBlocks = dropzone.querySelectorAll('.workspace-block');
 
-  // 1. Check empty
+  // 1. EMPTY CHECK
   if (wsBlocks.length === 0) {
     output.innerHTML = '<span class="error">❌ No blocks in workspace</span>';
     validationResult.textContent = 'Please add blocks';
@@ -20,7 +20,7 @@ export function runAndValidate({ dropzone, output, validationResult, levelConfig
 
   output.innerHTML += `<span class="warning">--- Validation Start ---</span><br><br>`;
 
-  // 2. STRUCTURE CHECK
+  // 2. STRUCTURE VALIDATION
   if (
     structure.length !== expected.length ||
     !structure.every((val, i) => val === expected[i])
@@ -33,13 +33,15 @@ export function runAndValidate({ dropzone, output, validationResult, levelConfig
     output.innerHTML += `<span class="success">✅ Structure is correct</span><br><br>`;
   }
 
-  // 3. IF BLOCK VALIDATION
+  // 3. IF BLOCK VALIDATION (ORDER-INDEPENDENT)
   const ifBlocks = Array.from(wsBlocks).filter(b => b.dataset.type === 'if');
 
   if (ifBlocks.length !== 2) {
     output.innerHTML += `<span class="error">❌ You must use exactly 2 IF blocks</span><br>`;
     hasError = true;
   }
+
+  let foundPrints = [];
 
   ifBlocks.forEach((ifBlock, index) => {
     const container = ifBlock.querySelector('.loop-container');
@@ -48,35 +50,29 @@ export function runAndValidate({ dropzone, output, validationResult, levelConfig
     output.innerHTML += `<span class="warning">Checking IF ${index + 1}</span><br>`;
 
     if (!nestedPrint) {
-      output.innerHTML += `<span class="error">❌ IF block is empty</span><br>`;
+      output.innerHTML += `<span class="error">❌ IF block is empty</span><br><br>`;
       hasError = true;
       return;
     }
 
     const printValue = nestedPrint.dataset.value;
+    foundPrints.push(printValue);
 
-    if (index === 0) {
-      if (printValue !== 'a is even') {
-        output.innerHTML += `<span class="error">❌ First IF must print "a is even"</span><br>`;
-        hasError = true;
-      } else {
-        output.innerHTML += `<span class="success">✅ First IF correct</span><br>`;
-      }
-    }
-
-    if (index === 1) {
-      if (printValue !== 'a is odd') {
-        output.innerHTML += `<span class="error">❌ Second IF must print "a is odd"</span><br>`;
-        hasError = true;
-      } else {
-        output.innerHTML += `<span class="success">✅ Second IF correct</span><br>`;
-      }
-    }
-
-    output.innerHTML += `<br>`;
+    output.innerHTML += `<span class="success">✔ Found: ${printValue}</span><br><br>`;
   });
 
-  // 4. FINAL RESULT
+  // 4. FINAL PRINT VALIDATION (ORDER FREE)
+  if (!foundPrints.includes('a is even')) {
+    output.innerHTML += `<span class="error">❌ Missing: "a is even"</span><br>`;
+    hasError = true;
+  }
+
+  if (!foundPrints.includes('a is odd')) {
+    output.innerHTML += `<span class="error">❌ Missing: "a is odd"</span><br>`;
+    hasError = true;
+  }
+
+  // 5. FINAL RESULT
   if (!hasError) {
     output.innerHTML += `<span class="success">🎉 Perfect Solution!</span>`;
     validationResult.textContent = 'Success! You solved it correctly';
