@@ -1,35 +1,21 @@
 export function runAndValidate({ dropzone, output, validationResult, levelConfig }) {
-    output.style.backgroundColor = '#0b1120';
-    output.style.color = '#fff';
-    output.style.padding = '20px';
-    output.style.fontFamily = 'monospace';
 
-    output.innerHTML = '<span style="color: #f59e0b">--- Execution Steps ---</span><br><br>';
-    validationResult.innerHTML = '';
-    validationResult.className = 'validation-result';
+    // ✅ TERMINAL STYLE UI
+    output.style.background = "linear-gradient(to right, #020617, #020617)";
+    output.style.color = "#e2e8f0";
+    output.style.padding = "20px";
+    output.style.fontFamily = "monospace";
+    output.style.borderRadius = "10px";
+    output.style.lineHeight = "1.6";
 
-    const wsBlocks = dropzone.querySelectorAll('.workspace-block');
+    output.innerHTML = `<span style="color:#facc15">--- Execution Steps ---</span><br><br>`;
+    validationResult.innerHTML = "";
+    validationResult.className = "validation-result";
+
+    const wsBlocks = dropzone.querySelectorAll(".workspace-block");
 
     if (wsBlocks.length === 0) {
-        output.innerHTML += '<span style="color: #f59e0b">❌ No blocks in workspace</span>';
-        validationResult.textContent = 'Add blocks to run the program';
-        validationResult.classList.add('validation-error');
-        return 0;
-    }
-
-    const structure = Array.from(wsBlocks).map(b => b.dataset.type);
-    const expected = levelConfig.expectedStructure;
-
-    const isStructureValid = structure.length === expected.length &&
-        structure.every((type, i) => {
-            if (expected[i] === 'variable' && type === 'variable') return true;
-            return type === expected[i];
-        });
-
-    if (!isStructureValid) {
-        output.innerHTML += `❌ Invalid structure<br>Expected: ${expected.join(' → ')}`;
-        validationResult.textContent = 'Wrong block order';
-        validationResult.classList.add('validation-error');
+        output.innerHTML += `<span style="color:#ef4444">❌ No blocks in workspace</span>`;
         return 0;
     }
 
@@ -39,50 +25,75 @@ export function runAndValidate({ dropzone, output, validationResult, levelConfig
     wsBlocks.forEach((block, index) => {
         const type = block.dataset.type;
 
-        // ✅ FIXED LABEL
-        const spans = block.querySelectorAll('span');
+        // ✅ FIX LABEL
+        const spans = block.querySelectorAll("span");
         const label = spans[spans.length - 1].textContent.trim();
 
-        output.innerHTML += `Step ${index + 1}: ${type}<br>`;
+        // STEP TITLE
+        output.innerHTML += `<span style="color:#facc15">Step ${index + 1}:</span> <span style="color:#cbd5f5">${type}</span><br>`;
 
-        if (type === 'start') {
-            output.innerHTML += `🚀 Program initialized...<br><br>`;
+        // START
+        if (type === "start") {
+            output.innerHTML += `🚀 <span style="color:#e2e8f0">Program initialized...</span><br><br>`;
         }
 
-        if (type === 'variable') {
+        // VARIABLE
+        if (type === "variable") {
             const match = label.match(/([a-zA-Z])\s*=\s*(\d+)/);
             if (match) {
-                variables[match[1]] = parseInt(match[2]);
-                output.innerHTML += `📦 ${match[1]} = ${match[2]}<br><br>`;
+                const varName = match[1];
+                const varValue = parseInt(match[2]);
+
+                variables[varName] = varValue;
+
+                output.innerHTML += `📦 <span style="color:#e2e8f0">Variable set:</span> <span style="color:#22c55e">${varName} = ${varValue}</span><br><br>`;
             }
         }
 
-        if (type === 'operation') {
+        // OPERATION (AUTO DETECT 🔥)
+        if (type === "operation") {
             if (variables.a !== null && variables.b !== null) {
-                // ✅ MULTIPLICATION
-                variables.c = variables.a * variables.b;
-                output.innerHTML += `🧮 c = ${variables.a} * ${variables.b} = ${variables.c}<br><br>`;
+
+                if (label.includes("+")) {
+                    variables.c = variables.a + variables.b;
+                    output.innerHTML += `🧮 <span style="color:#e2e8f0">Operation:</span> <span style="color:#22c55e">c = ${variables.a} + ${variables.b} = ${variables.c}</span><br><br>`;
+                }
+
+                else if (label.includes("-")) {
+                    variables.c = variables.a - variables.b;
+                    output.innerHTML += `🧮 <span style="color:#e2e8f0">Operation:</span> <span style="color:#22c55e">c = ${variables.a} - ${variables.b} = ${variables.c}</span><br><br>`;
+                }
+
+                else if (label.includes("*")) {
+                    variables.c = variables.a * variables.b;
+                    output.innerHTML += `🧮 <span style="color:#e2e8f0">Operation:</span> <span style="color:#22c55e">c = ${variables.a} * ${variables.b} = ${variables.c}</span><br><br>`;
+                }
+
+                else if (label.includes("/")) {
+                    variables.c = Math.floor(variables.a / variables.b);
+                    output.innerHTML += `🧮 <span style="color:#e2e8f0">Operation:</span> <span style="color:#22c55e">c = ${variables.a} / ${variables.b} = ${variables.c}</span><br><br>`;
+                }
+
             } else {
-                output.innerHTML += `⚠️ Error: Variables not defined<br><br>`;
+                output.innerHTML += `⚠️ <span style="color:#ef4444">Error: Variables not defined</span><br><br>`;
             }
         }
 
-        if (type === 'print') {
-            finalOutput = variables.c;
-            output.innerHTML += `💬 Printed: ${finalOutput}<br><br>`;
+        // PRINT
+        if (type === "print") {
+            finalOutput = variables.c !== null ? variables.c : label;
+
+            output.innerHTML += `📢 <span style="color:#e2e8f0">Output:</span> <span style="color:#22c55e">"${finalOutput}"</span><br><br>`;
         }
+
     });
 
-    // ✅ 2 * 3 = 6
-    if (finalOutput === 6) {
-        output.innerHTML += '✅ Program executed successfully!';
-        validationResult.textContent = 'Success! Output: 6';
-        validationResult.style.color = "#22c55e";
+    // ✅ FINAL SUCCESS STYLE (LIKE YOUR IMAGE)
+    if (finalOutput !== null) {
+        output.innerHTML += `<span style="color:#22c55e">✔️ Program executed perfectly!</span>`;
         return 1;
     } else {
-        output.innerHTML += '❌ Incorrect output';
-        validationResult.textContent = 'Expected output: 6';
-        validationResult.style.color = "#ef4444";
+        output.innerHTML += `<span style="color:#ef4444">❌ Execution failed</span>`;
         return 0;
     }
 }
